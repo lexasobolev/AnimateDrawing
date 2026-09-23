@@ -26,6 +26,14 @@ namespace AnimatedDrawingsWorld.Core
         private SpriteRenderer sourceRenderer;
         private GameObject videoRoot;
         private BehaviorState currentState;
+        private VideoPlayer activePlayer;
+
+        // normalized [0,1) position within the currently playing clip's loop, e.g. for syncing
+        // movement speed to a walk cycle's steps. 0 if nothing is playing yet.
+        public float CurrentClipPhase01 =>
+            activePlayer != null && activePlayer.isPlaying && activePlayer.length > 0
+                ? (float)((activePlayer.time % activePlayer.length) / activePlayer.length)
+                : 0f;
 
         private void Awake()
         {
@@ -100,6 +108,7 @@ namespace AnimatedDrawingsWorld.Core
         private void OnStateChanged(BehaviorState state)
         {
             currentState = state;
+            activePlayer = null;
             if (players.Count == 0) return;
 
             foreach (var player in players.Values)
@@ -109,24 +118,25 @@ namespace AnimatedDrawingsWorld.Core
                 player.gameObject.SetActive(false);
             }
 
-            if (!players.TryGetValue(state, out var activePlayer))
+            if (!players.TryGetValue(state, out var nextPlayer))
             {
                 AnimationLoopCompleted?.Invoke(); // nothing to play — don't leave the controller waiting forever
                 return;
             }
-            if (!File.Exists(activePlayer.url))
+            if (!File.Exists(nextPlayer.url))
             {
-                Debug.LogWarning($"{name}: Meta clip not found: {activePlayer.url}. Using source sprite.", this);
+                Debug.LogWarning($"{name}: Meta clip not found: {nextPlayer.url}. Using source sprite.", this);
                 if (sourceRenderer != null) sourceRenderer.enabled = true;
                 AnimationLoopCompleted?.Invoke();
                 return;
             }
 
             if (sourceRenderer != null) sourceRenderer.enabled = false;
-            activePlayer.gameObject.SetActive(true);
-            activePlayer.loopPointReached += HandleLoopPointReached;
-            activePlayer.Prepare();
-            activePlayer.prepareCompleted += PlayPrepared;
+            nextPlayer.gameObject.SetActive(true);
+            nextPlayer.loopPointReached += HandleLoopPointReached;
+            nextPlayer.Prepare();
+            nextPlayer.prepareCompleted += PlayPrepared;
+            activePlayer = nextPlayer;
         }
 
         private void HandleLoopPointReached(VideoPlayer player) => AnimationLoopCompleted?.Invoke();

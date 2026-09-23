@@ -102,6 +102,11 @@ namespace AnimatedDrawingsWorld.EditorTools
                 {
                     if (args.Data != null) metaError.AppendLine(args.Data);
                 };
+                // The Python script writes straight into Assets/StreamingAssets for a couple of
+                // minutes. Unity's background auto-refresh can otherwise import a file mid-write,
+                // then choke later with a "SourceAssetDB modification time" mismatch once the
+                // write finishes and our own explicit Refresh below sees the final timestamp.
+                AssetDatabase.DisallowAutoRefresh();
                 activeMetaProcess.Start();
                 activeMetaProcess.BeginOutputReadLine();
                 activeMetaProcess.BeginErrorReadLine();
@@ -111,6 +116,7 @@ namespace AnimatedDrawingsWorld.EditorTools
             catch (Exception exception)
             {
                 UnityEngine.Debug.LogError($"Could not start Meta Animated Drawings. Install Python and its dependencies: {exception.Message}");
+                AssetDatabase.AllowAutoRefresh();
                 activeMetaProcess.Dispose();
                 activeMetaProcess = null;
                 completed(false);
@@ -122,6 +128,7 @@ namespace AnimatedDrawingsWorld.EditorTools
             if (activeMetaProcess == null || !activeMetaProcess.HasExited) return;
 
             EditorApplication.update -= PollMetaProcess;
+            AssetDatabase.AllowAutoRefresh();
             var succeeded = activeMetaProcess.ExitCode == 0;
             if (!string.IsNullOrWhiteSpace(metaOutput.ToString())) UnityEngine.Debug.Log(metaOutput.ToString());
             if (!succeeded)

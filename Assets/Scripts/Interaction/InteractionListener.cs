@@ -15,11 +15,29 @@ namespace AnimatedDrawingsWorld.Interaction
     {
         [SerializeField] private InteractionRuleSet ruleSet;
 
+        [Header("Seeking out interactions")]
+        [Tooltip("How far a character can notice another one worth approaching. Keep this comfortably " +
+                 "bigger than double the trigger collider's radius (scaled by character size), or it " +
+                 "won't extend interaction range beyond characters incidentally bumping into each other.")]
+        [SerializeField] private float awarenessRadius = 10f;
+        [SerializeField] private float seekCheckInterval = 0.75f;
+        [Tooltip("Safety timeout for an approach walk, in case the target wanders off before being reached.")]
+        [SerializeField] private float walkToInteractDuration = 10f;
+
         private static int nextTieBreakId;
         private int tieBreakId;
 
+        // every active listener, so an idle character can notice one outside trigger range and
+        // walk over — OnTriggerStay2D alone only fires once they've already bumped into each other
+        private static readonly List<InteractionListener> All = new();
+
         private CharacterStateController controller;
         private readonly Dictionary<InteractionListener, float> cooldownReadyAt = new();
+        private float nextSeekCheckAt;
+
+        // who this character is currently walking toward, if anyone — reserved so no other idle
+        // character also picks the same target and they all converge/stack on top of it
+        private InteractionListener approachTarget;
 
         private void Awake()
         {
@@ -34,6 +52,49 @@ namespace AnimatedDrawingsWorld.Interaction
 
             if (ruleSet == null)
                 Debug.LogWarning($"{name}: InteractionListener has no Rule Set assigned — this character will never interact.", this);
+        }
+
+        private void OnEnable() => All.Add(this);
+        private void OnDisable() => All.Remove(this);
+
+        private void Update()
+        {
+            // release the reservation once we're no longer actually walking toward them, whether
+            // because we arrived and interacted, got interrupted into something else, or timed out
+            if (approachTarget != null && controller.State != BehaviorState.Walk)
+                approachTarget = null;
+
+            // only look for someone to approach while genuinely idle, so this never fights an
+            // already-purposeful Walk (random wander or an approach already in progress)
+            if (ruleSet == null || controller.State != BehaviorState.Idle) return;
+            if (Time.time < nextSeekCheckAt) return;
+            nextSeekCheckAt = Time.time + seekCheckInterval;
+
+            InteractionListener best = null;
+            var bestDistance = awarenessRadius;
+            foreach (var other in All)
+            {
+                if (other == this || IsBusy(other.controller.State)) continue;
+                if (cooldownReadyAt.TryGetValue(other, out var readyAt) && Time.time < readyAt) continue;
+                if (!ruleSet.TryFindRule(controller.State, other.controller.State, out _)) continue;
+                if (IsAlreadyBeingApproached(other)) continue;
+
+                var distance = Vector3.Distance(transform.position, other.transform.position);
+                if (distance >= bestDistance) continue;
+                best = other;
+                bestDistance = distance;
+            }
+
+            if (best == null) return;
+            approachTarget = best;
+            controller.WalkToward(best.transform, walkToInteractDuration);
+        }
+
+        private static bool IsAlreadyBeingApproached(InteractionListener candidate)
+        {
+            foreach (var listener in All)
+                if (listener.approachTarget == candidate) return true;
+            return false;
         }
 
         private void OnTriggerStay2D(Collider2D other)
