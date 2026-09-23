@@ -16,7 +16,8 @@ GameObject:
   - component: {fileID: 9168199630102571386}
   - component: {fileID: 1000000000000000001}
   - component: {fileID: 1000000000000000002}
-  - component: {fileID: 1000000000000000003}
+  - component: {fileID: 1000000000000000004}
+  - component: {fileID: 9114475762286339576}
   m_Layer: 0
   m_Name: Sprite
   m_TagString: Untagged
@@ -88,7 +89,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: dcea51d6065d64246aeec467afeff684, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -116,7 +117,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -167,7 +168,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f877ae070c66d034bbe252bcbaf4287b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Core.CharacterStateController
   minIdleTime: 1.5
   maxIdleTime: 4
@@ -190,7 +191,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3089f90565d43b4285163230b502df4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Interaction.InteractionListener
   ruleSet: {fileID: 11400000, guid: f0c2dac2c5b93d64fb9f2fa9ade9f27b, type: 2}
 --- !u!114 &1000000000000000001
@@ -203,7 +204,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa1acc4859efa6940b7ccaeda7932a05, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Core.CharacterAnimatorDriver
   animator: {fileID: 1369427115019819232}
   crossFadeDuration: 0.1
@@ -217,9 +218,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 237411f0c8696034a80b178c9d219ada, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Core.DebugStateLogger
---- !u!114 &1000000000000000003
+--- !u!114 &1000000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -228,7 +229,38 @@ MonoBehaviour:
   m_GameObject: {fileID: 8007377358539455404}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Core.StateColorVisualizer
-  spriteRenderer: {fileID: 1712330930569351207}
+  m_Script: {fileID: 11500000, guid: 6f4e8c2a91b743d5a0c6e7f8129d3b54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Core.AiAnimationController
+  endpoint: https://api.openai.com/v1/chat/completions
+  apiKey:
+  model: gpt-4o-mini
+  prompt: Make the character wave and then look surprised.
+  playOnStart: 1
+--- !u!50 &9114475762286339576
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8007377358539455404}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0

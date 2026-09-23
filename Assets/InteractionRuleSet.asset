@@ -37,3 +37,11 @@ MonoBehaviour:
     resultForB: 0
     resultDuration: 1
     cooldown: 5
+  - ruleName: Join the Dance
+    stateA: 0
+    stateB: 6
+    probability: 0.7
+    resultForA: 6
+    resultForB: 6
+    resultDuration: 2
+    cooldown: 6

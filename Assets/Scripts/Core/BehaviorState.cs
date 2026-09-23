@@ -7,6 +7,7 @@ namespace AnimatedDrawingsWorld.Core
         Yawn,
         Sleep,
         Wave,
-        Surprised
+        Surprised,
+        Dance
     }
 }

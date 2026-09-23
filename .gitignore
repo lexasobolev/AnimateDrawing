@@ -49,3 +49,14 @@ Thumbs.db
 *.aab
 *.unitypackage
 *.app
+
+# Meta AnimatedDrawings is a separate third-party repo cloned locally per
+# META_ANIMATED_DRAWINGS_INTEGRATION.md (its torchserve/model-store/*.mar weights
+# are 300MB+ each, well over GitHub's per-file limit, and the rest is upstream
+# code we don't own). Excluded wholesale; our own customizations to specific
+# files within it are tracked anyway via `git add -f` (gitignore can't cleanly
+# re-include individual files this many directory levels deep).
+Tools/*
+
+# Desktop chat/context log — not part of this project
+/chat.json
