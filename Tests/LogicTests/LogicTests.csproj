@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compiles the engine-independent game logic (Assets/Scripts/Logic) outside Unity and tests it
+    against real children's drawings in Tests/TestImages. LangVersion is pinned to Unity 6's
+    C# 9 so anything that compiles here also compiles in the Editor.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>AnimatedDrawingsWorld.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Logic/**/*.cs" Link="Logic/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
+  </ItemGroup>
+</Project>

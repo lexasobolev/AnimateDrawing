@@ -57,6 +57,8 @@ Thumbs.db
 # files within it are tracked anyway via `git add -f` (gitignore can't cleanly
 # re-include individual files this many directory levels deep).
 Tools/*
+# ...except our own tools that live next to it
+!Tools/MotionBaker/
 
 # Desktop chat/context log — not part of this project
 /chat.json
@@ -69,3 +71,9 @@ Tools/*
 # would otherwise re-include it even though the video.mp4 itself is ignored)
 Assets/StreamingAssets/AnimatedDrawings/**/*.mp4
 Assets/StreamingAssets/AnimatedDrawings/**/*.mp4.meta
+
+# Headless test build output and rendered inspection images/frames
+Tests/LogicTests/[Bb]in/
+Tests/Output/
+# the standalone logic test project is hand-written, unlike Unity's generated .csproj files
+!Tests/LogicTests/LogicTests.csproj
