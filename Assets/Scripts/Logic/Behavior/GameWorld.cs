@@ -143,6 +143,14 @@ namespace AnimatedDrawingsWorld.Logic.Behavior
             a.FollowingOrders = true;
         }
 
+        public void CommandWalkTo(Agent a, V2 target)
+        {
+            Interrupt(a);
+            var goal = ClampToBand(target);
+            a.Plan.Enqueue(new PlanStep { Kind = StepKind.GoTo, Target = goal, Speed = Speed(a), Activity = Activity.Walk, Duration = 30f, Thought = "on my way" });
+            a.FollowingOrders = true;
+        }
+
         public void BeginDrag(Agent a)
         {
             Interrupt(a);

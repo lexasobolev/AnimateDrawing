@@ -271,55 +271,98 @@ namespace AnimatedDrawingsWorld.Logic.Animation
 
         // Triangle indices in painter's order, like Meta's _set_draw_indices: body-part groups by
         // increasing depth, and inside a group, joints in listed order (reversed when behind).
+        // Runs every frame, so per-joint triangle lists are cached and nothing is allocated.
         public int[] BuildDrawOrder(DrawingRig rig, string[][] groups, float[] groupDepths, int[] output = null)
         {
             groups ??= DefaultBodyPartGroups;
             groupDepths ??= DefaultGroupDepths;
             output ??= new int[Triangles.Length];
+            EnsureDrawCache(rig, groups);
 
-            var groupOrder = new int[groups.Length];
-            for (var g = 0; g < groups.Length; g++) groupOrder[g] = g;
-            Array.Sort(groupOrder, (x, y) => (x < groupDepths.Length ? groupDepths[x] : 0f).CompareTo(y < groupDepths.Length ? groupDepths[y] : 0f));
-
-            var emitted = new bool[TriangleCount];
-            var cursor = 0;
-            void EmitJoint(int joint)
+            var groupCount = groups.Length;
+            if (groupOrder == null || groupOrder.Length != groupCount) groupOrder = new int[groupCount];
+            for (var g = 0; g < groupCount; g++) groupOrder[g] = g;
+            // insertion sort by depth (5 groups; stable, allocation-free)
+            for (var i = 1; i < groupCount; i++)
             {
-                // farthest-from-bone triangles first, as Meta does
-                var list = new List<int>();
-                for (var t = 0; t < TriangleCount; t++) if (!emitted[t] && TriangleOwner[t] == joint) list.Add(t);
-                list.Sort((a, b) => triangleOwnerDistance[b].CompareTo(triangleOwnerDistance[a]));
-                foreach (var t in list)
+                var g = groupOrder[i];
+                var d = g < groupDepths.Length ? groupDepths[g] : 0f;
+                var k = i - 1;
+                while (k >= 0 && (groupOrder[k] < groupDepths.Length ? groupDepths[groupOrder[k]] : 0f) > d)
                 {
-                    emitted[t] = true;
-                    output[cursor++] = Triangles[t * 3];
-                    output[cursor++] = Triangles[t * 3 + 1];
-                    output[cursor++] = Triangles[t * 3 + 2];
+                    groupOrder[k + 1] = groupOrder[k];
+                    k--;
+                }
+                groupOrder[k + 1] = g;
+            }
+
+            var cursor = 0;
+            foreach (var joint in unlistedJoints) cursor = Emit(joint, output, cursor);
+            foreach (var g in groupOrder)
+            {
+                var joints = groupJoints[g];
+                var depth = g < groupDepths.Length ? groupDepths[g] : 0f;
+                if (depth > 0f)
+                    for (var k = 0; k < joints.Length; k++) cursor = Emit(joints[k], output, cursor);
+                else
+                    for (var k = joints.Length - 1; k >= 0; k--) cursor = Emit(joints[k], output, cursor);
+            }
+            return output;
+        }
+
+        private int[][] trianglesByJoint;   // per joint: triangle ids, farthest from the bone first
+        private int[][] groupJoints;        // per group: joint ids
+        private int[] unlistedJoints;
+        private string[][] cachedGroups;
+        private int[] groupOrder;
+
+        private int Emit(int joint, int[] output, int cursor)
+        {
+            foreach (var t in trianglesByJoint[joint])
+            {
+                output[cursor++] = Triangles[t * 3];
+                output[cursor++] = Triangles[t * 3 + 1];
+                output[cursor++] = Triangles[t * 3 + 2];
+            }
+            return cursor;
+        }
+
+        private void EnsureDrawCache(DrawingRig rig, string[][] groups)
+        {
+            if (trianglesByJoint == null)
+            {
+                var lists = new List<int>[rig.JointCount];
+                for (var j = 0; j < lists.Length; j++) lists[j] = new List<int>();
+                for (var t = 0; t < TriangleCount; t++) lists[TriangleOwner[t]].Add(t);
+                trianglesByJoint = new int[rig.JointCount][];
+                for (var j = 0; j < lists.Length; j++)
+                {
+                    lists[j].Sort((a, b) => triangleOwnerDistance[b].CompareTo(triangleOwnerDistance[a]));
+                    trianglesByJoint[j] = lists[j].ToArray();
                 }
             }
 
-            // triangles owned by joints that no group lists (e.g. root) go underneath everything
-            var listed = new HashSet<string>();
-            foreach (var g in groups) foreach (var name in g) listed.Add(name);
-            for (var j = 0; j < rig.JointCount; j++) if (!listed.Contains(rig.Names[j])) EmitJoint(j);
-
-            foreach (var g in groupOrder)
+            if (ReferenceEquals(groups, cachedGroups)) return;
+            cachedGroups = groups;
+            var listed = new bool[rig.JointCount];
+            groupJoints = new int[groups.Length][];
+            for (var g = 0; g < groups.Length; g++)
             {
-                var names = groups[g];
-                var depth = g < groupDepths.Length ? groupDepths[g] : 0f;
-                if (depth > 0f)
-                    for (var k = 0; k < names.Length; k++) EmitJointByName(names[k]);
-                else
-                    for (var k = names.Length - 1; k >= 0; k--) EmitJointByName(names[k]);
+                var ids = new List<int>();
+                foreach (var name in groups[g])
+                {
+                    var j = rig.IndexOf(name);
+                    if (j < 0 || listed[j]) continue;
+                    listed[j] = true;
+                    ids.Add(j);
+                }
+                groupJoints[g] = ids.ToArray();
             }
-
-            void EmitJointByName(string name)
-            {
-                var j = rig.IndexOf(name);
-                if (j >= 0) EmitJoint(j);
-            }
-
-            return output;
+            // joints no group lists (root, and any extra joints of custom skeletons like the
+            // six-armed bug) are drawn first, underneath everything
+            var unlisted = new List<int>();
+            for (var j = 0; j < rig.JointCount; j++) if (!listed[j]) unlisted.Add(j);
+            unlistedJoints = unlisted.ToArray();
         }
     }
 }

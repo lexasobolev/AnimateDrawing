@@ -1,0 +1,20 @@
+name: Game logic tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Scene analysis, rigging and simulation tests on real kids' drawings
+        run: dotnet test Tests/LogicTests
+      - name: Compile Unity runtime scripts against UnityEngine references
+        run: dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj
+      - name: Compile Unity editor scripts against UnityEditor references
+        run: dotnet build Tests/UnityCompileCheck/EditorCheck/EditorCheck.csproj

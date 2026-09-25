@@ -77,3 +77,6 @@ Tests/LogicTests/[Bb]in/
 Tests/Output/
 # the standalone logic test project is hand-written, unlike Unity's generated .csproj files
 !Tests/LogicTests/LogicTests.csproj
+Tests/**/[Bb]in/
+!Tests/UnityCompileCheck/UnityCompileCheck.csproj
+!Tests/UnityCompileCheck/EditorCheck/EditorCheck.csproj

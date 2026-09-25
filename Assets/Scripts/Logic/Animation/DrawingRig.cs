@@ -123,13 +123,16 @@ namespace AnimatedDrawingsWorld.Logic.Animation
             return min;
         }
 
-        // the rest orientation of every mapped bone, i.e. "stand like you were drawn"
-        public Dictionary<string, float> DrawnOrientations()
+        // the rest orientation of every bone, i.e. "stand like you were drawn" (cached)
+        public IReadOnlyDictionary<string, float> DrawnOrientations()
         {
-            var result = new Dictionary<string, float>();
-            for (var i = 0; i < JointCount; i++) if (Parent[i] >= 0) result[Names[i]] = StartingTheta[i];
-            return result;
+            if (drawn != null) return drawn;
+            drawn = new Dictionary<string, float>();
+            for (var i = 0; i < JointCount; i++) if (Parent[i] >= 0) drawn[Names[i]] = StartingTheta[i];
+            return drawn;
         }
+
+        private Dictionary<string, float> drawn;
     }
 
     public sealed class RigPose

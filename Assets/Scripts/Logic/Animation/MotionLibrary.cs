@@ -63,6 +63,7 @@ namespace AnimatedDrawingsWorld.Logic.Animation
         private readonly MotionLibrary library;
         private readonly Dictionary<string, float> orientations = new();
         private readonly Dictionary<string, float> previous = new();
+        private readonly List<string> keys = new();
         private readonly float[] groupDepths = new float[5];
         private string clipOverride;
         private float blend = 1f;
@@ -116,7 +117,9 @@ namespace AnimatedDrawingsWorld.Logic.Animation
             if (blend < 1f && previous.Count > 0)
             {
                 var t = MathUtil.SmoothStep(blend);
-                foreach (var key in new List<string>(orientations.Keys))
+                keys.Clear();
+                keys.AddRange(orientations.Keys);
+                foreach (var key in keys)
                     if (previous.TryGetValue(key, out var from)) orientations[key] = MathUtil.LerpAngle(from, orientations[key], t);
             }
 

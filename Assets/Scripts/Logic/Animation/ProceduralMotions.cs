@@ -109,12 +109,7 @@ namespace AnimatedDrawingsWorld.Logic.Animation
                 {
                     // a big stretch: arms rise over ~1s, hold, lower
                     var k = MathUtil.SmoothStep(MathUtil.Clamp01(MathF.Min(t / 0.8f, (2.4f - t) / 0.8f)));
-                    Blend(o, rig.DrawnOrientations(), new Dictionary<string, float>
-                    {
-                        ["right_elbow"] = 30f, ["right_hand"] = 15f,
-                        ["left_elbow"] = 330f, ["left_hand"] = 345f,
-                        ["neck"] = 350f, ["torso"] = 0f,
-                    }, k);
+                    Blend(o, rig.DrawnOrientations(), YawnStretch, k);
                     rootY = 0.02f * k;
                     break;
                 }
@@ -172,6 +167,13 @@ namespace AnimatedDrawingsWorld.Logic.Animation
                 }
             }
         }
+
+        private static readonly Dictionary<string, float> YawnStretch = new()
+        {
+            ["right_elbow"] = 30f, ["right_hand"] = 15f,
+            ["left_elbow"] = 330f, ["left_hand"] = 345f,
+            ["neck"] = 350f, ["torso"] = 0f,
+        };
 
         private static float Deg(float radians)
         {

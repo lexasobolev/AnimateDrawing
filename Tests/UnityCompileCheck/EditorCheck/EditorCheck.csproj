@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compile-only check of Assets/Editor (plus the runtime scripts it uses) against the
+       UnityEditor/UnityEngine reference assemblies of the Unity3D.SDK NuGet package. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
+    <NoWarn>$(NoWarn);NU1701;CS0618;CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/Scripts/**/*.cs" />
+    <Compile Include="../../../Assets/Editor/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Unity3D.SDK" Version="2021.1.14.1" ExcludeAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgUnity3D_SDK)/lib/UnityEngine.dll" Private="false" />
+    <Reference Include="$(PkgUnity3D_SDK)/lib/UnityEditor.dll" Private="false" />
+  </ItemGroup>
+</Project>

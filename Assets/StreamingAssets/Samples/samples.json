@@ -1,0 +1,84 @@
+{
+  "backgrounds": [
+    {
+      "name": "Meadow with trees",
+      "path": "Samples/Backgrounds/meadow_trees_sun.jpg"
+    },
+    {
+      "name": "House and garden",
+      "path": "Samples/Backgrounds/house_tree_garden.jpg"
+    },
+    {
+      "name": "Beach and sea",
+      "path": "Samples/Backgrounds/beach_sea_rock.jpg"
+    },
+    {
+      "name": "Mountains and pond",
+      "path": "Samples/Backgrounds/mountains_pond.jpg"
+    },
+    {
+      "name": "Pencil sketch",
+      "path": "Samples/Backgrounds/pencil_sketch.jpg"
+    },
+    {
+      "name": "Kid's room (photo)",
+      "path": "Samples/Backgrounds/real_kid_room_photo.jpg"
+    }
+  ],
+  "characters": [
+    {
+      "name": "Crown Boy",
+      "folder": "Samples/Characters/boy_crown",
+      "kind": "Human",
+      "start": true
+    },
+    {
+      "name": "Ballerina",
+      "folder": "Samples/Characters/girl_ballerina",
+      "kind": "Human",
+      "start": true
+    },
+    {
+      "name": "Candy Corn",
+      "folder": "Samples/Characters/candy_corn_monster",
+      "kind": "Monster",
+      "start": true
+    },
+    {
+      "name": "Piggy",
+      "folder": "Samples/Characters/pig_animal",
+      "kind": "Animal",
+      "start": true
+    },
+    {
+      "name": "Stick Kid",
+      "folder": "Samples/Characters/stick_figure",
+      "kind": "Human",
+      "start": false
+    },
+    {
+      "name": "Six-armed Bug",
+      "folder": "Samples/Characters/bug_monster",
+      "kind": "Monster",
+      "start": false
+    },
+    {
+      "name": "Garlic",
+      "folder": "Samples/Characters/garlic_monster",
+      "kind": "Monster",
+      "start": false
+    },
+    {
+      "name": "Stick Man",
+      "folder": "AnimatedDrawings/drawing/annotations",
+      "kind": "Human",
+      "start": false
+    },
+    {
+      "name": "Fuzzy Monster",
+      "folder": "AnimatedDrawings/monster1/annotations",
+      "kind": "Monster",
+      "start": true
+    }
+  ]
+}

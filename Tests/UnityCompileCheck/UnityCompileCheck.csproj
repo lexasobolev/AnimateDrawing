@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compile-only check of the Unity scripts without the Unity Editor (e.g. in CI or a cloud
+    sandbox): builds Assets/Scripts against UnityEngine reference assemblies from NuGet.
+    Runtime scripts use UnityEngine 2021.3 module references; the Editor scripts are checked in
+    the sibling EditorCheck project against a 2021.1 UnityEditor reference. The project itself
+    targets Unity 6 (C# 9, .NET Standard 2.1), which is a superset of these APIs.
+      dotnet build Tests/UnityCompileCheck
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);NU1701;CS0618;CS0649</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" ExcludeAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(PkgUnityEngine_Modules)/lib/net35/*.dll" Private="false" />
+  </ItemGroup>
+</Project>
