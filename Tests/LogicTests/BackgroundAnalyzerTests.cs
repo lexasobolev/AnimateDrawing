@@ -61,6 +61,16 @@ namespace AnimatedDrawingsWorld.Tests
             var recall = (float)found / expected;
             output.WriteLine($"{scene}: recall {found}/{expected} = {recall:P0}");
             Assert.True(recall >= 0.75f, $"{scene}: only {found}/{expected} objects found");
+
+            // precision: detected objects that match something the child actually drew
+            var truthRects = truth.Select(t => MiniJson.Obj(t)).Select(o => (kind: MiniJson.Str(MiniJson.Get(o, "kind")),
+                rect: MiniJson.Arr(MiniJson.Get(o, "bounds")).Select(v => MiniJson.Num(v)).ToArray())).ToList();
+            var detected = layout.Objects.Where(o => o.Kind != SceneObjectKind.Sky && !GroundKinds.Contains(o.Kind.ToString())).ToList();
+            var correct = detected.Count(o => truthRects.Any(t => t.kind == o.Kind.ToString() &&
+                IoU(o.Bounds, new Rect2(t.rect[0], 1 - t.rect[3], t.rect[2], 1 - t.rect[1])) > 0.1f));
+            var precision = detected.Count == 0 ? 1f : (float)correct / detected.Count;
+            output.WriteLine($"{scene}: precision {correct}/{detected.Count} = {precision:P0}");
+            Assert.True(precision >= 0.6f, $"{scene}: {detected.Count - correct} false detections");
         }
 
         [Fact]

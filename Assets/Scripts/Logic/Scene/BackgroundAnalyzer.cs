@@ -252,6 +252,7 @@ namespace AnimatedDrawingsWorld.Logic.Scene
                 if (r.Used || r.Color != ColorClass.Gray || r.Area < 0.002f || r.Area > 0.08f) continue;
                 var ground = GroundYDown(r.Cx);
                 if (Math.Abs(r.Y1 - ground) > 0.12f || r.W < r.H * 0.6f) continue;
+                if (InsideAny(layout, SceneObjectKind.Mountain, r)) continue; // snow and shading on a mountain
                 Add(SceneObjectKind.Rock, r.X0, r.Y0, r.X1, r.Y1, 0.6f, "rock", r.Color);
                 r.Used = true;
             }
@@ -266,6 +267,7 @@ namespace AnimatedDrawingsWorld.Logic.Scene
                 if (r.Area < 0.0004f || r.Area > 0.012f || r.W > 0.1f || r.H > 0.12f || r.Fill < 0.25f) continue;
                 var ground = GroundYDown(r.Cx);
                 if (r.Cy < ground - 0.2f) continue;
+                if (InsideAny(layout, SceneObjectKind.Mountain, r) || InsideAny(layout, SceneObjectKind.House, r)) continue;
                 Add(SceneObjectKind.Flower, r.X0, r.Y0, r.X1, r.Y1, 0.55f, r.Color.ToString().ToLowerInvariant() + " flower", r.Color);
                 r.Used = true;
                 flowers++;
@@ -286,7 +288,7 @@ namespace AnimatedDrawingsWorld.Logic.Scene
             }
 
             // --- outline-only drawings (pencil): closed shapes become generic props / sun / clouds
-            DetectOutlinedShapes(layout, ink, w, h, Add, GroundYDown);
+            DetectOutlinedShapes(layout, ink, classes, w, h, Add, GroundYDown);
 
             return layout;
         }
@@ -309,6 +311,13 @@ namespace AnimatedDrawingsWorld.Logic.Scene
                 var gain = MathUtil.Clamp(240f / Math.Max(1f, background[i]), 1f, 2.2f);
                 for (var k = 0; k < 3; k++) p[i * 4 + k] = (byte)Math.Min(255f, p[i * 4 + k] * gain);
             }
+        }
+
+        private static bool InsideAny(SceneLayout layout, SceneObjectKind kind, Region r)
+        {
+            var center = new V2(r.Cx, 1f - r.Cy);
+            foreach (var o in layout.OfKind(kind)) if (o.Bounds.Contains(center)) return true;
+            return false;
         }
 
         private static bool IsBlue(ColorClass c) => c == ColorClass.Blue || c == ColorClass.LightBlue;
@@ -587,13 +596,44 @@ namespace AnimatedDrawingsWorld.Logic.Scene
 
         // Closed pencil outlines (no fill) show up as paper regions not connected to the page
         // border. Classify by shape: round & high = sun, wide & high = cloud, on the ground = prop.
-        private static void DetectOutlinedShapes(SceneLayout layout, GrayImage strokes, int w, int h,
+        private static void DetectOutlinedShapes(SceneLayout layout, GrayImage strokes, byte[] classes, int w, int h,
             Func<SceneObjectKind, float, float, float, float, float, string, ColorClass, SceneObject> add,
             Func<float, float> groundYDown)
         {
             // thicken strokes a little so hand-drawn outlines with small gaps still close
             var ink = ImageOps.Dilate(strokes, 1);
-            ImageOps.Label(ink, v => v == 0, false, out var holes);
+            var holeLabels = ImageOps.Label(ink, v => v == 0, false, out var holes);
+
+            // share of a hole's surroundings that is coloured crayon rather than a pencil line:
+            // paper left between coloured areas is not a drawn outline
+            float ColouredBorder(Component hole)
+            {
+                int coloured = 0, total = 0;
+                for (var y = Math.Max(0, hole.YMin - 1); y <= Math.Min(h - 1, hole.YMax + 1); y++)
+                for (var x = Math.Max(0, hole.XMin - 1); x <= Math.Min(w - 1, hole.XMax + 1); x++)
+                {
+                    if (holeLabels[y * w + x] != hole.Label) continue;
+                    var edge = false;
+                    for (var k = 0; k < 4 && !edge; k++)
+                    {
+                        var nx = x + (k == 0 ? 1 : k == 1 ? -1 : 0);
+                        var ny = y + (k == 2 ? 1 : k == 3 ? -1 : 0);
+                        if (nx >= 0 && ny >= 0 && nx < w && ny < h && holeLabels[ny * w + nx] != hole.Label) edge = true;
+                    }
+                    if (!edge) continue;
+                    total++;
+                    // look a few pixels further out, past the dilated stroke
+                    var cx = hole.CentroidX;
+                    var cy = hole.CentroidY;
+                    var dx = x - cx;
+                    var dy = y - cy;
+                    var len = MathF.Sqrt(dx * dx + dy * dy) + 1e-3f;
+                    var ox = MathUtil.Clamp((int)MathF.Round(x + dx / len * 4f), 0, w - 1);
+                    var oy = MathUtil.Clamp((int)MathF.Round(y + dy / len * 4f), 0, h - 1);
+                    if (ColorClassifier.IsChromatic((ColorClass)classes[oy * w + ox])) coloured++;
+                }
+                return total == 0 ? 1f : (float)coloured / total;
+            }
 
             var hasSun = layout.Count(SceneObjectKind.Sun) > 0;
             foreach (var hole in holes)
@@ -616,7 +656,7 @@ namespace AnimatedDrawingsWorld.Logic.Scene
                         o.Kind == SceneObjectKind.Dirt || o.Kind == SceneObjectKind.Sand || o.Kind == SceneObjectKind.Floor) continue;
                     if (o.Bounds.Contains(new V2(cx, 1f - cy))) covered = true;
                 }
-                if (covered) continue;
+                if (covered || ColouredBorder(hole) > 0.35f) continue;
 
                 var aspect = hole.BoxWidth / (float)hole.BoxHeight;
                 var ground = groundYDown(cx);
@@ -629,8 +669,9 @@ namespace AnimatedDrawingsWorld.Logic.Scene
                 {
                     add(SceneObjectKind.Cloud, x0, y0, x1, y1, 0.4f, "cloud (outline)", ColorClass.Dark);
                 }
-                else if (Math.Abs(y1 - ground) < 0.1f)
+                else if (Math.Abs(y1 - ground) < 0.1f && hole.FillRatio > 0.6f && x1 - x0 < 0.4f)
                 {
+                    // box-like and not huge: paper gaps between coloured things are irregular
                     var tall = (y1 - y0) > (x1 - x0) * 1.2f;
                     add(SceneObjectKind.Shape, x0, y0, x1, y1, 0.35f, tall ? "tall outlined shape" : "outlined box", ColorClass.Dark);
                 }
