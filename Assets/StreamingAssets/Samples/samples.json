@@ -70,13 +70,13 @@
     },
     {
       "name": "Stick Man",
-      "folder": "AnimatedDrawings/drawing/annotations",
+      "folder": "Samples/Characters/stick_man",
       "kind": "Human",
       "start": false
     },
     {
       "name": "Fuzzy Monster",
-      "folder": "AnimatedDrawings/monster1/annotations",
+      "folder": "Samples/Characters/fuzzy_monster",
       "kind": "Monster",
       "start": true
     }

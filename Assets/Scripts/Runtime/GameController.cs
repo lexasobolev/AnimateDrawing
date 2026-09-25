@@ -62,6 +62,47 @@ namespace AnimatedDrawingsWorld.Runtime
 
         public Func<Vector2, bool> IsPointerOverUi = _ => false;
 
+        public static GameController Instance { get; private set; }
+
+        // Pressing Play in any scene (an empty one, or a scene saved before this game existed)
+        // still starts the game: if no scene provides a GameController, create one.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void EnsureGameExists()
+        {
+            if (Instance != null) return;
+            var game = new GameObject("Game");
+            game.AddComponent<GameController>();
+            game.AddComponent<GameUI>();
+            Debug.Log("AnimatedDrawingsWorld: no GameController in the scene, created one.");
+        }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            Application.logMessageReceived += OnLogMessage;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance != this) return;
+            Instance = null;
+            Application.logMessageReceived -= OnLogMessage;
+        }
+
+        // surface errors in the game itself, so a problem never looks like a silent blank screen
+        private void OnLogMessage(string message, string stackTrace, LogType type)
+        {
+            if (type != LogType.Error && type != LogType.Exception) return;
+            var firstLine = message.Split('\n')[0];
+            AddLog("<color=#ff8080>Error: " + firstLine + "</color>");
+            SetStatus("Error: " + firstLine);
+        }
+
         private IEnumerator Start()
         {
             Camera = Camera.main;

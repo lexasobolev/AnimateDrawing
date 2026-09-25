@@ -63,14 +63,6 @@ Tools/*
 # Desktop chat/context log — not part of this project
 /chat.json
 
-# Generated per-character animation clips: multi-MB each and regeneratable via
-# "Upload and Animate with Meta..." (needs the local TorchServe container running).
-# The rest of a character's StreamingAssets output (texture, mask, config) stays
-# tracked since it's small and useful for inspection without re-running the pipeline.
-# (the .meta needs its own line — the blanket "!/Assets/**/*.meta" negation above
-# would otherwise re-include it even though the video.mp4 itself is ignored)
-Assets/StreamingAssets/AnimatedDrawings/**/*.mp4
-Assets/StreamingAssets/AnimatedDrawings/**/*.mp4.meta
 
 # Headless test build output and rendered inspection images/frames
 Tests/LogicTests/[Bb]in/

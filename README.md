@@ -13,8 +13,9 @@ scare and chase.
 
 ## Play
 
-1. Open the project in Unity 6 (6000.6) and open `Assets/Scenes/GameScene.unity`
-   (or run **AnimatedDrawingsWorld → Build Game Scene**). Press Play.
+1. Open the project in Unity 6 (6000.6) and press Play. `Assets/Scenes/GameScene.unity` is the
+   game scene (**AnimatedDrawingsWorld → Build Game Scene** recreates it), but pressing Play in any
+   scene starts the game. Errors, if any, appear in the toolbar and the log at the bottom.
 2. The toolbar:
    * **Background...** — pick a sample, open any PNG/JPG file, or paste a web address. Swapping
      the background re-analyzes it and moves everyone onto the new ground.
@@ -111,10 +112,7 @@ truth, plus crayon-style landscapes with known object positions.
 ## Meta's pipeline
 
 `META_ANIMATED_DRAWINGS_INTEGRATION.md` explains the TorchServe setup. With the container running
-the game uses Meta's models automatically (`GameController → Use Meta TorchServe`). The older
-Editor flow (**AnimatedDrawingsWorld → Upload and Animate with Meta...**, pre-rendered MP4 clips
-per state in `MainScene`) still works; characters it produced are available as samples in the new
-game too.
+the game uses Meta's models automatically (`GameController → Use Meta TorchServe`).
 
 ## Limitations
 
