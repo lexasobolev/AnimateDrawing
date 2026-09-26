@@ -33,6 +33,7 @@ namespace AnimatedDrawingsWorld.EditorTools
             var game = new GameObject("Game");
             game.AddComponent<GameController>();
             game.AddComponent<GameUI>();
+            game.AddComponent<EditModePreview>();
 
             Directory.CreateDirectory("Assets/Scenes");
             EditorSceneManager.SaveScene(scene, ScenePath);

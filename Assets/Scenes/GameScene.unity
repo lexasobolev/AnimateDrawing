@@ -222,6 +222,7 @@ GameObject:
   - component: {fileID: 500101}
   - component: {fileID: 500102}
   - component: {fileID: 500103}
+  - component: {fileID: 500104}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -275,6 +276,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 036ae58f34ec4b09a47ce970d1e17939, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Runtime.GameUI
+--- !u!114 &500104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fc8fbe9797343408ecf9560923d92f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedDrawingsWorld.Runtime.EditModePreview
+  worldHeight: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
