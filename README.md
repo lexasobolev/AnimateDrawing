@@ -15,21 +15,20 @@ scare and chase.
 
 1. Open the project in Unity 6 (6000.6) and press Play. `Assets/Scenes/GameScene.unity` is the
    game scene (**AnimatedDrawingsWorld → Build Game Scene** recreates it), but pressing Play in any
-   scene starts the game. Errors, if any, appear in the toolbar and the log at the bottom.
-2. The toolbar:
-   * **Background...** — pick a sample, open any PNG/JPG file, or paste a web address. Swapping
-     the background re-analyzes it and moves everyone onto the new ground.
-   * **Add character...** — samples, or any photo/scan of a drawing (file or URL). **New is:**
-     chooses Human / Monster / Animal (Auto guesses from the silhouette).
-   * **Show analysis** — overlays every detected object with its confidence and the walkable
-     ground band.
-   * Pause and simulation speed.
-3. Click a character to see what it is thinking and its needs, give it orders (Climb, Sleep, Swim,
-   Smell, Hide, Dance, Scare…), change its kind, or remove it. **Drag** a character to pick it up:
-   drop it in a tree crown and it sits on a branch then climbs down, drop it in the sky and it
-   falls. **Right-click** the ground to send the selected character there.
+   scene starts the game. Errors, if any, appear in a red note at the bottom of the screen.
+2. The screen shows only three round buttons:
+   * **Monster** (top left): add a character. Pick a photo or scan of any drawing; it is cut out
+     of the paper, rigged and joins the scene. Files picked from a sample folder
+     (`StreamingAssets/Samples/Characters/*/texture.png`) keep their annotated skeleton.
+   * **House and sun** (top right): change the background. It is re-analyzed and everyone moves
+     onto the new ground.
+   * **Cross** (bottom, shown when there are characters): remove all characters.
+3. Everything else happens in the drawing: **drag** a character to pick it up (drop it in a tree
+   crown and it sits on a branch, drop it in the sky and it falls) and **right-click** the ground
+   to send the last touched character there. Bubbles show moods: `!` fright, `♪` dancing,
+   `♥` friends, `Zzz` asleep.
 
-In the Editor the file buttons use the native file dialog; player builds have an in-game browser.
+In the Editor the buttons use the native file dialog; player builds have an in-game file browser.
 
 ## How it works
 
@@ -79,7 +78,8 @@ procedural poses (climb, sit, sleep, swim, smell…) ─────────
   / wave goodbye; monsters roar and people flee — sometimes chased; monsters throw dance parties;
   people pet animals; sleepers get woken up). Humans passing a monster get a fright.
 * **Unity layer** (`Assets/Scripts/Runtime`): `GameController`, `CharacterView` (mesh rebuilt each
-  frame from the posed rig), `BackgroundView`, `GameUI` (IMGUI), `RuntimeFileBrowser`.
+  frame from the posed rig), `BackgroundView`, `GameUI` (three round buttons, icons painted in
+  code by `IconPainter`), `RuntimeFileBrowser`.
 
 Everything in `Assets/Scripts/Logic` is plain C# with no UnityEngine dependency, so it runs (and
 is tested) outside Unity.

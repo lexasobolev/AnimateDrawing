@@ -42,10 +42,8 @@ namespace AnimatedDrawingsWorld.Runtime
         public string Status { get; private set; } = "Starting...";
         public bool Busy => busyCount > 0;
         public readonly List<string> Log = new();
-        public float Speed = 1f;
-        public bool Paused;
-        public bool ShowAnalysis;
-        public CharacterKind? NewCharacterKind; // null = guess
+        public string LastError { get; private set; }
+        public float LastErrorTime { get; private set; } = -100f;
 
         public Camera Camera { get; private set; }
 
@@ -99,8 +97,9 @@ namespace AnimatedDrawingsWorld.Runtime
         {
             if (type != LogType.Error && type != LogType.Exception) return;
             var firstLine = message.Split('\n')[0];
-            AddLog("<color=#ff8080>Error: " + firstLine + "</color>");
-            SetStatus("Error: " + firstLine);
+            AddLog("Error: " + firstLine);
+            LastError = firstLine;
+            LastErrorTime = Time.unscaledTime;
         }
 
         private IEnumerator Start()
@@ -143,7 +142,7 @@ namespace AnimatedDrawingsWorld.Runtime
         private void Update()
         {
             if (World == null) return;
-            var dt = Paused ? 0f : Time.deltaTime * Speed;
+            var dt = Time.deltaTime;
             HandlePointer();
             if (dt > 0f) World.Step(dt);
             foreach (var view in Views) view.Tick(dt);
@@ -256,7 +255,7 @@ namespace AnimatedDrawingsWorld.Runtime
                 var annotation = CharacterBuilder.FromMetaFiles(TextureConversion.ToImage(textureTex), TextureConversion.ToMask(maskTex), cfg);
                 Destroy(textureTex);
                 Destroy(maskTex);
-                yield return BuildAndSpawn(annotation, entry.Name, NewCharacterKind ?? entry.Kind);
+                yield return BuildAndSpawn(annotation, entry.Name, entry.KindIsGuess ? (CharacterKind?)null : entry.Kind);
             }
             busyCount--;
         }
@@ -265,6 +264,22 @@ namespace AnimatedDrawingsWorld.Runtime
 
         private IEnumerator LoadCharacterRoutine(string location)
         {
+            // a file picked from a Meta annotation folder (texture.png + mask.png + char_cfg.yaml,
+            // e.g. one of the samples) keeps its annotated skeleton
+            var folder = !location.Contains("://") ? Path.GetDirectoryName(location) : null;
+            if (folder != null && File.Exists(Path.Combine(folder, "mask.png")) && File.Exists(Path.Combine(folder, "char_cfg.yaml")) &&
+                File.Exists(Path.Combine(folder, "texture.png")))
+            {
+                yield return LoadSampleCharacterRoutine(new SamplesManifest.CharacterEntry
+                {
+                    Name = Path.GetFileName(folder),
+                    Folder = folder,
+                    Kind = CharacterKind.Human,
+                    KindIsGuess = true,
+                });
+                yield break;
+            }
+
             busyCount++;
             var name = Path.GetFileNameWithoutExtension(location.Split('?')[0]);
             SetStatus($"Loading drawing '{name}'...");
@@ -299,7 +314,7 @@ namespace AnimatedDrawingsWorld.Runtime
             }
             if (annotation == null) yield break;
             AddLog($"{name}: skeleton from {(annotation.Source == "meta-torchserve" ? "Meta's pose model" : "the built-in estimator")}");
-            yield return BuildAndSpawn(annotation, name, NewCharacterKind);
+            yield return BuildAndSpawn(annotation, name, null);
         }
 
         private IEnumerator BuildAndSpawn(CharacterAnnotation annotation, string name, CharacterKind? kind)
@@ -326,6 +341,11 @@ namespace AnimatedDrawingsWorld.Runtime
             var n = 1;
             while (Views.Exists(v => v.Agent.Name == candidate)) candidate = $"{name} {++n}";
             return candidate;
+        }
+
+        public void ClearCharacters()
+        {
+            foreach (var view in Views.ToArray()) Remove(view);
         }
 
         public void Remove(CharacterView view)
@@ -450,6 +470,7 @@ namespace AnimatedDrawingsWorld.Runtime
             public string Folder;
             public CharacterKind Kind;
             public bool StartInScene;
+            public bool KindIsGuess;
         }
 
         public readonly List<Entry> Backgrounds = new();

@@ -4,7 +4,7 @@ The game uses Meta's [AnimatedDrawings](https://github.com/facebookresearch/Anim
 two places:
 
 * **Skeletons for new drawings (optional).** When Meta's TorchServe container is running, drawings
-  added through **Add character...** are sent to its `drawn_humanoid_detector` and
+  added with the monster button are sent to its `drawn_humanoid_detector` and
   `drawn_humanoid_pose_estimator` (the same requests Meta's `image_to_annotations.py` makes, see
   `Assets/Scripts/Runtime/MetaTorchServeClient.cs`). Without the container the game uses its
   built-in cut-out and skeleton estimator.
