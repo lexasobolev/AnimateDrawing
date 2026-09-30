@@ -18,3 +18,9 @@ jobs:
         run: dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj
       - name: Compile Unity editor scripts against UnityEditor references
         run: dotnet build Tests/UnityCompileCheck/EditorCheck/EditorCheck.csproj
+      - name: Compile the Android and iPhone code paths (with the NativeGallery package)
+        run: |
+          git clone --quiet https://github.com/yasirkula/UnityNativeGallery.git "$RUNNER_TEMP/ng"
+          git -C "$RUNNER_TEMP/ng" checkout --quiet 6fdfae30629814b22b971453d87665d10e1c2ed4
+          dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj -p:Platform_=UNITY_ANDROID -p:NativeGalleryDir="$RUNNER_TEMP/ng"
+          dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj -p:Platform_=UNITY_IOS -p:NativeGalleryDir="$RUNNER_TEMP/ng"

@@ -1,0 +1,6 @@
+{
+    "AutomatedSetup": true,
+    "PhotoLibraryUsageDescription": "Pick a photo of a drawing to bring it to life.",
+    "PhotoLibraryAdditionsUsageDescription": "Save pictures of your drawings.",
+    "DontAskLimitedPhotosPermissionAutomaticallyOnIos14": true
+}

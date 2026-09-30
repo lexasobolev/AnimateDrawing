@@ -17,18 +17,19 @@ scare and chase.
    game scene (**AnimatedDrawingsWorld → Build Game Scene** recreates it), but pressing Play in any
    scene starts the game. Errors, if any, appear in a red note at the bottom of the screen.
 2. The screen shows only big round buttons:
-   * **Monster** (top left): add a character. Pick a photo or scan of any drawing; it is cut out
-     of the paper, rigged and joins the scene. Files picked from a sample folder
-     (`StreamingAssets/Samples/Characters/*/texture.png`) keep their annotated skeleton.
-   * **House and sun** (top right): change the background. It is re-analyzed and everyone moves
-     onto the new ground.
+   * **Monster** (top left): add a character. **House and sun** (top right): change the
+     background. Each opens two choices: **camera** (take a photo of a drawing right in the app:
+     back camera, big shutter button, front/back switch) or **gallery** (the phone's photos; a
+     file picker on a computer). A character is cut out of the paper, rigged and joins the scene;
+     a new background is re-analyzed and everyone moves onto the new ground. Files picked from a
+     sample folder (`StreamingAssets/Samples/Characters/*/texture.png`) keep their skeleton.
    * **Cross** (bottom, shown when there are characters): remove all characters.
    * **Speaker** (next to the cross): sound on/off (remembered).
 3. **Click a character** to open its card (large text): what it is doing and thinking, its
    energy/friendliness/curiosity, Human/Monster/Animal, and buttons to make it climb, sleep,
    swim, dance... **Drag** a character to pick it up (drop it in a tree crown and it sits on a
-   branch, drop it in the sky and it falls) and **right-click** the ground to send the clicked
-   character there. Bubbles show moods: `!` fright, `♪` dancing, `♥` friends, `Zzz` asleep.
+   branch, drop it in the sky and it falls) and **tap/click the ground** (or right-click) to send
+   the selected character there. Bubbles show moods: `!` fright, `♪` dancing, `♥` friends, `Zzz` asleep.
 4. **Sounds** are synthesized in code (no audio files) and each character has its own voice
    pitch: children chatter and say "hi", squeak "eek!" when scared, yawn and snore; monsters
    growl and roar; animals oink; plus boings, splashes, sniffs, a little jingle when a dance
@@ -36,7 +37,25 @@ scare and chase.
    changes, with per-character and global limits (turn-taking in chats, one snorer, one jingle
    per dance party), so a busy scene stays around 30 short sounds a minute.
 
-In the Editor the buttons use the native file dialog; player builds have an in-game file browser.
+In the Editor the gallery choice uses the native file dialog; desktop builds have an in-game file
+browser.
+
+## Phones (Android and iPhone)
+
+Install the **Android Build Support** and/or **iOS Build Support** modules in Unity Hub, then:
+
+* **AnimatedDrawingsWorld → Build for Android (APK)** writes `Builds/Android/AnimatedDrawingsWorld.apk`
+  (copy it to the phone and install it, or use **Build and Run on Android** with the phone connected
+  by USB and USB debugging enabled).
+* **AnimatedDrawingsWorld → Build for iPhone (Xcode project)** writes `Builds/iOS`; open it on a Mac
+  in Xcode, pick your signing team and run it on the iPhone.
+
+The app runs in landscape, keeps its buttons inside the safe area (notches), asks for camera and
+photo permission the first time they are needed, and the Android back button closes the camera,
+the choices or the character card. The photo library uses the MIT-licensed
+[NativeGallery](https://github.com/yasirkula/UnityNativeGallery) package (added to
+`Packages/manifest.json`, pinned to a commit; Unity downloads it with git on first open). Meta's
+TorchServe models are desktop-only; on phones the built-in skeleton finder is used.
 
 ## How it works
 
@@ -99,6 +118,7 @@ is tested) outside Unity.
 dotnet test Tests/LogicTests                                          # 68 tests, ~40 s
 dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj         # Unity runtime scripts compile
 dotnet build Tests/UnityCompileCheck/EditorCheck/EditorCheck.csproj   # Editor scripts compile
+# Android/iPhone code paths: add -p:Platform_=UNITY_ANDROID (or UNITY_IOS) -p:NativeGalleryDir=<NativeGallery clone>
 RENDER_SIM=1 dotnet test Tests/LogicTests --filter CharactersLive     # + frames in Tests/Output/sim
 ```
 

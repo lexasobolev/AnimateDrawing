@@ -87,6 +87,71 @@ namespace AnimatedDrawingsWorld.Runtime
             c.Line(Color.white, (0.72f, 0.42f), (0.58f, 0.58f), 0.045f);
         });
 
+        // choices shown next to the monster / house buttons
+        public static Texture2D CameraChoice() => Paint(new Color32(95, 39, 205, 255), c =>
+        {
+            c.Polygon(Color.white, (0.25f, 0.38f), (0.75f, 0.38f), (0.75f, 0.70f), (0.25f, 0.70f));
+            c.Polygon(Color.white, (0.40f, 0.38f), (0.44f, 0.31f), (0.56f, 0.31f), (0.60f, 0.38f));
+            c.Ellipse(new Color32(95, 39, 205, 255), 0.5f, 0.54f, 0.12f, 0.12f);
+            c.Ellipse(Color.white, 0.5f, 0.54f, 0.07f, 0.07f);
+            c.Ellipse(new Color32(95, 39, 205, 255), 0.68f, 0.44f, 0.025f, 0.025f);
+        });
+
+        public static Texture2D GalleryChoice() => Paint(new Color32(16, 172, 132, 255), c =>
+        {
+            // a picture: frame, sun, mountains
+            c.Polygon(Color.white, (0.24f, 0.30f), (0.76f, 0.30f), (0.76f, 0.70f), (0.24f, 0.70f));
+            c.Polygon(new Color32(170, 225, 255, 255), (0.28f, 0.34f), (0.72f, 0.34f), (0.72f, 0.66f), (0.28f, 0.66f));
+            c.Ellipse(new Color32(255, 210, 60, 255), 0.62f, 0.43f, 0.045f, 0.045f);
+            c.Polygon(new Color32(46, 160, 90, 255), (0.28f, 0.66f), (0.42f, 0.46f), (0.53f, 0.60f), (0.60f, 0.52f), (0.72f, 0.66f));
+        });
+
+        public static Texture2D FolderChoice() => Paint(new Color32(16, 172, 132, 255), c =>
+        {
+            c.Polygon(new Color32(255, 214, 110, 255), (0.24f, 0.34f), (0.42f, 0.34f), (0.46f, 0.39f), (0.76f, 0.39f), (0.76f, 0.68f), (0.24f, 0.68f));
+            c.Polygon(new Color32(255, 234, 160, 255), (0.24f, 0.45f), (0.76f, 0.45f), (0.76f, 0.68f), (0.24f, 0.68f));
+        });
+
+        // camera screen controls
+        public static Texture2D Shutter()
+        {
+            var canvas = new Canvas(Size * Super);
+            canvas.Ellipse(new Color32(0, 0, 0, 60), 0.5f, 0.52f, 0.47f, 0.47f);
+            canvas.Ellipse(Color.white, 0.5f, 0.5f, 0.46f, 0.46f);
+            canvas.Ellipse(new Color32(40, 40, 40, 255), 0.5f, 0.5f, 0.40f, 0.40f);
+            canvas.Ellipse(Color.white, 0.5f, 0.5f, 0.36f, 0.36f);
+            return TextureConversion.ToTexture(canvas.Image.Resize(Size, Size));
+        }
+
+        public static Texture2D Close() => Paint(new Color32(40, 40, 40, 200), c =>
+        {
+            c.Line(Color.white, (0.36f, 0.36f), (0.64f, 0.64f), 0.07f);
+            c.Line(Color.white, (0.64f, 0.36f), (0.36f, 0.64f), 0.07f);
+        });
+
+        public static Texture2D SwitchCamera() => Paint(new Color32(40, 40, 40, 200), c =>
+        {
+            // two curved arrows around a circle
+            for (var k = 0; k < 2; k++)
+            {
+                var start = k * MathF.PI;
+                var prev = (0f, 0f);
+                for (var i = 0; i <= 10; i++)
+                {
+                    var a = start + 0.3f + 2.2f * i / 10f;
+                    var p = (0.5f + MathF.Cos(a) * 0.2f, 0.5f + MathF.Sin(a) * 0.2f);
+                    if (i > 0) c.Line(Color.white, prev, p, 0.05f);
+                    prev = p;
+                }
+                var end = start + 2.5f;
+                var tip = (0.5f + MathF.Cos(end) * 0.2f, 0.5f + MathF.Sin(end) * 0.2f);
+                var back = end - 0.35f;
+                c.Polygon(Color.white, tip,
+                    (0.5f + MathF.Cos(back) * 0.28f, 0.5f + MathF.Sin(back) * 0.28f),
+                    (0.5f + MathF.Cos(back) * 0.12f, 0.5f + MathF.Sin(back) * 0.12f));
+            }
+        });
+
         private static void Speaker(Canvas c)
         {
             c.Polygon(Color.white, (0.27f, 0.42f), (0.36f, 0.42f), (0.36f, 0.58f), (0.27f, 0.58f));

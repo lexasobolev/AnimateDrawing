@@ -132,7 +132,8 @@ namespace AnimatedDrawingsWorld.Runtime
 
             yield return StreamingAssetsIO.ReadText(samplesManifest, json => Samples = SamplesManifest.Parse(json), error => AddLog("No samples manifest: " + error));
 
-            if (useMetaTorchServe) StartCoroutine(torchServe.Ping());
+            if (useMetaTorchServe && !Application.isMobilePlatform) StartCoroutine(torchServe.Ping());
+            Screen.sleepTimeout = SleepTimeout.NeverSleep; // it's a toy to watch, don't dim the screen
 
             if (Samples.Backgrounds.Count > 0) yield return LoadBackgroundRoutine(Samples.Backgrounds[0].Path, Samples.Backgrounds[0].Name);
             else yield return ApplyBackground(MakeBlankPaper(), "blank paper");
@@ -262,6 +263,27 @@ namespace AnimatedDrawingsWorld.Runtime
                 Destroy(maskTex);
                 yield return BuildAndSpawn(annotation, entry.Name, entry.KindIsGuess ? (CharacterKind?)null : entry.Kind);
             }
+            busyCount--;
+        }
+
+        // photos from the camera or the phone's gallery arrive as textures
+        public void LoadBackgroundFromTexture(Texture2D texture, string name) => StartCoroutine(BackgroundFromTextureRoutine(texture, name));
+
+        private IEnumerator BackgroundFromTextureRoutine(Texture2D texture, string name)
+        {
+            busyCount++;
+            yield return ApplyBackground(TextureConversion.LimitSize(texture, 2048), name);
+            busyCount--;
+        }
+
+        public void AddCharacterFromPhoto(Texture2D texture, string name) => StartCoroutine(CharacterFromPhotoRoutine(texture, name));
+
+        private IEnumerator CharacterFromPhotoRoutine(Texture2D texture, string name)
+        {
+            busyCount++;
+            var limited = TextureConversion.LimitSize(texture, 1600);
+            yield return AddCharacterFromTexture(limited, name);
+            Destroy(limited);
             busyCount--;
         }
 
@@ -396,7 +418,8 @@ namespace AnimatedDrawingsWorld.Runtime
                 pressed = Pick(world);
                 pressScreen = mouse;
                 dragging = false;
-                Select(pressed);
+                if (pressed != null) Select(pressed);
+                else if (Selected != null) World.CommandWalkTo(Selected.Agent, new V2(world.x, world.y));
                 if (pressed != null) dragOffset = new Vector2(pressed.Agent.Feet.X, pressed.Agent.Feet.Y) - world;
             }
 

@@ -6,19 +6,22 @@ using UnityEngine;
 namespace AnimatedDrawingsWorld.Runtime
 {
     // Deliberately minimal UI: big round buttons and, for a clicked character, one readable card.
-    //   top-left      monster       add a character (pick a drawing)
-    //   top-right     house + sun   change the background (pick a drawing)
+    //   top-left      monster       add a character    } each opens two choices:
+    //   top-right     house + sun   change the background } camera (take a photo) / gallery (pick one)
     //   bottom        cross         remove all characters     speaker   sound on/off
     //   right side    card of the clicked character: kind, mood, needs, things to do
-    // Drag characters around; right-click the ground to send the clicked character there.
+    // Drag characters around; tap (or right-click) the ground to send the selected character there.
     [RequireComponent(typeof(GameController))]
     public sealed class GameUI : MonoBehaviour
     {
         private GameController game;
         private readonly RuntimeFileBrowser browser = new();
-        private Texture2D characterIcon, backgroundIcon, clearIcon, soundOnIcon, soundOffIcon, white;
+        private Texture2D characterIcon, backgroundIcon, clearIcon, soundOnIcon, soundOffIcon, cameraIcon, galleryIcon, white;
+        private CameraCapture cameraCapture;
+        // which big button's choices (camera / gallery) are open
+        private Button chooser;
         private GUIStyle bubble, toast, cardTitle, cardText, cardButton, cardToggle, card;
-        private enum Button { None, Character, Background, Clear, Sound }
+        private enum Button { None, Character, Background, Clear, Sound, TakePhoto, PickPicture }
         private Button busyButton;
         private Rect cardRect;
 
@@ -35,19 +38,24 @@ namespace AnimatedDrawingsWorld.Runtime
             game.IsPointerOverUi = screen =>
             {
                 var gui = new Vector2(screen.x, Screen.height - screen.y);
-                return browser.Visible || HitButton(gui) != Button.None || (game.Selected != null && cardRect.Contains(gui));
+                return browser.Visible || cameraCapture.Visible || chooser != Button.None || HitButton(gui) != Button.None ||
+                       (game.Selected != null && cardRect.Contains(gui));
             };
             characterIcon = IconPainter.AddCharacter();
             backgroundIcon = IconPainter.AddBackground();
             clearIcon = IconPainter.Clear();
             soundOnIcon = IconPainter.SoundOn();
             soundOffIcon = IconPainter.SoundOff();
+            cameraIcon = IconPainter.CameraChoice();
+            galleryIcon = PhotoSource.HasPhoneGallery ? IconPainter.GalleryChoice() : IconPainter.FolderChoice();
+            cameraCapture = GetComponent<CameraCapture>();
+            if (cameraCapture == null) cameraCapture = gameObject.AddComponent<CameraCapture>();
             white = Texture2D.whiteTexture;
         }
 
         private void OnDestroy()
         {
-            foreach (var t in new[] { characterIcon, backgroundIcon, clearIcon, soundOnIcon, soundOffIcon }) Destroy(t);
+            foreach (var t in new[] { characterIcon, backgroundIcon, clearIcon, soundOnIcon, soundOffIcon, cameraIcon, galleryIcon }) Destroy(t);
         }
 
         // big enough for a child's finger: ~16% of the short screen side
@@ -57,33 +65,57 @@ namespace AnimatedDrawingsWorld.Runtime
 
         private Rect RectOf(Button b)
         {
+            var safe = CameraCapture.SafeAreaGui();
             var s = ButtonSize;
             var m = Margin;
             var small = s * 0.75f;
-            var bottom = Screen.height - m - small;
-            return b switch
+            var bottom = safe.yMax - m - small;
+            switch (b)
             {
-                Button.Character => new Rect(m, m, s, s),
-                Button.Background => new Rect(Screen.width - m - s, m, s, s),
-                Button.Clear => new Rect(Screen.width * 0.5f - small - m * 0.5f, bottom, small, small),
-                Button.Sound => new Rect(Screen.width * 0.5f + m * 0.5f, bottom, small, small),
-                _ => Rect.zero,
-            };
+                case Button.Character: return new Rect(safe.x + m, safe.y + m, s, s);
+                case Button.Background: return new Rect(safe.xMax - m - s, safe.y + m, s, s);
+                case Button.Clear: return new Rect(safe.center.x - small - m * 0.5f, bottom, small, small);
+                case Button.Sound: return new Rect(safe.center.x + m * 0.5f, bottom, small, small);
+                case Button.TakePhoto:
+                case Button.PickPicture:
+                {
+                    // the two choices line up beside the button that opened them, toward the middle
+                    var owner = RectOf(chooser);
+                    var option = s * 0.8f;
+                    var index = b == Button.TakePhoto ? 0 : 1;
+                    var y = owner.center.y - option * 0.5f;
+                    return chooser == Button.Character
+                        ? new Rect(owner.xMax + m + index * (option + m), y, option, option)
+                        : new Rect(owner.x - m - option - index * (option + m), y, option, option);
+                }
+                default: return Rect.zero;
+            }
         }
 
         private Button HitButton(Vector2 gui)
         {
-            foreach (Button b in new[] { Button.Character, Button.Background, Button.Clear, Button.Sound })
+            foreach (Button b in new[] { Button.TakePhoto, Button.PickPicture, Button.Character, Button.Background, Button.Clear, Button.Sound })
             {
                 if (b == Button.Clear && game.Views.Count == 0) continue;
+                if ((b == Button.TakePhoto || b == Button.PickPicture) && chooser == Button.None) continue;
+                if (b == Button.TakePhoto && !CameraCapture.HasCamera) continue;
                 var r = RectOf(b);
                 if ((gui - r.center).magnitude <= r.width * 0.5f) return b;
             }
             return Button.None;
         }
 
+        private void Update()
+        {
+            // Android back button / Escape: close the innermost thing that is open
+            if (!Input.GetKeyDown(KeyCode.Escape) || cameraCapture.Visible) return;
+            if (chooser != Button.None) chooser = Button.None;
+            else if (game.Selected != null) game.Select(null);
+        }
+
         private void OnGUI()
         {
+            if (cameraCapture.Visible) return; // the camera screen covers everything
             EnsureStyles();
             if (game.World != null) DrawBubbles();
 
@@ -91,6 +123,11 @@ namespace AnimatedDrawingsWorld.Runtime
             DrawButton(Button.Background, backgroundIcon);
             if (game.Views.Count > 0) DrawButton(Button.Clear, clearIcon);
             DrawButton(Button.Sound, SoundMuted ? soundOffIcon : soundOnIcon);
+            if (chooser != Button.None)
+            {
+                if (CameraCapture.HasCamera) DrawButton(Button.TakePhoto, cameraIcon);
+                DrawButton(Button.PickPicture, galleryIcon);
+            }
             DrawCharacterCard();
 
             if (!game.Busy) busyButton = Button.None;
@@ -100,7 +137,13 @@ namespace AnimatedDrawingsWorld.Runtime
             if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && !browser.Visible)
             {
                 var hit = HitButton(Event.current.mousePosition);
-                if (hit == Button.None || game.Busy && hit != Button.Sound && hit != Button.Clear) return;
+                if (hit == Button.None)
+                {
+                    // tapping anywhere else just closes the choices
+                    if (chooser != Button.None) chooser = Button.None;
+                    return;
+                }
+                if (game.Busy && (hit == Button.Character || hit == Button.Background)) return;
                 Event.current.Use();
                 Press(hit);
             }
@@ -116,21 +159,26 @@ namespace AnimatedDrawingsWorld.Runtime
             switch (b)
             {
                 case Button.Character:
-                    Click();
-                    PickImage("Choose a drawing of a character", "Samples/Characters", path =>
-                    {
-                        busyButton = Button.Character;
-                        game.LoadCharacterFromPathOrUrl(path);
-                    });
-                    break;
                 case Button.Background:
                     Click();
-                    PickImage("Choose a drawing for the background", "Samples/Backgrounds", path =>
-                    {
-                        busyButton = Button.Background;
-                        game.LoadBackgroundFromPathOrUrl(path);
-                    });
+                    chooser = chooser == b ? Button.None : b;
                     break;
+                case Button.TakePhoto:
+                {
+                    Click();
+                    var forCharacter = chooser == Button.Character;
+                    chooser = Button.None;
+                    cameraCapture.Open(photo => UsePhoto(photo, forCharacter, "Photo"));
+                    break;
+                }
+                case Button.PickPicture:
+                {
+                    Click();
+                    var forCharacter = chooser == Button.Character;
+                    chooser = Button.None;
+                    PickPicture(forCharacter);
+                    break;
+                }
                 case Button.Clear:
                     game.ClearCharacters();
                     break;
@@ -140,6 +188,30 @@ namespace AnimatedDrawingsWorld.Runtime
                     Click();
                     break;
             }
+        }
+
+        private void UsePhoto(Texture2D photo, bool forCharacter, string name)
+        {
+            if (photo == null) return;
+            busyButton = forCharacter ? Button.Character : Button.Background;
+            if (forCharacter) game.AddCharacterFromPhoto(photo, name);
+            else game.LoadBackgroundFromTexture(photo, name);
+        }
+
+        private void PickPicture(bool forCharacter)
+        {
+            var title = forCharacter ? "Choose a drawing of a character" : "Choose a drawing for the background";
+            if (PhotoSource.HasPhoneGallery)
+            {
+                PhotoSource.PickFromGallery(title, picture => UsePhoto(picture, forCharacter, "Picture"));
+                return;
+            }
+            PickImage(title, forCharacter ? "Samples/Characters" : "Samples/Backgrounds", path =>
+            {
+                busyButton = forCharacter ? Button.Character : Button.Background;
+                if (forCharacter) game.LoadCharacterFromPathOrUrl(path);
+                else game.LoadBackgroundFromPathOrUrl(path);
+            });
         }
 
         private void PickImage(string title, string samplesFolder, Action<string> picked)
@@ -179,8 +251,9 @@ namespace AnimatedDrawingsWorld.Runtime
             }
 
             // text scales with the screen, and shrinks only if the card wouldn't fit
-            var top = Margin * 2f + ButtonSize;
-            var available = Screen.height - top - ButtonSize - Margin * 2f;
+            var safe = CameraCapture.SafeAreaGui();
+            var top = safe.y + Margin * 2f + ButtonSize;
+            var available = safe.yMax - top - ButtonSize - Margin * 2f;
             var font = Mathf.Clamp(Screen.height / 34f, 18f, 34f);
             font = Mathf.Max(13f, Mathf.Min(font, available / 22f));
             var fontSize = Mathf.RoundToInt(font);
@@ -190,9 +263,9 @@ namespace AnimatedDrawingsWorld.Runtime
             cardToggle.fontSize = Mathf.RoundToInt(font * 0.9f);
             var row = font * 1.75f;
 
-            var width = Mathf.Clamp(font * 17f, 300f, Screen.width * 0.45f);
+            var width = Mathf.Clamp(font * 17f, 280f, safe.width * 0.45f);
             var height = Mathf.Min(available, font * 22f);
-            cardRect = new Rect(Screen.width - Margin - width, top, width, height);
+            cardRect = new Rect(safe.xMax - Margin - width, top, width, height);
             GUI.Box(cardRect, GUIContent.none, card);
 
             var agent = view.Agent;

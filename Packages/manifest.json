@@ -38,6 +38,7 @@
     "com.unity.modules.vehicles": "1.0.0",
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.yasirkula.nativegallery": "https://github.com/yasirkula/UnityNativeGallery.git#6fdfae30629814b22b971453d87665d10e1c2ed4"
   }
 }
