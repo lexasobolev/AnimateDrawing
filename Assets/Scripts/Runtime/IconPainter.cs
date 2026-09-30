@@ -62,6 +62,37 @@ namespace AnimatedDrawingsWorld.Runtime
             c.Line(Color.white, (0.67f, 0.33f), (0.33f, 0.67f), 0.075f);
         });
 
+        public static Texture2D SoundOn() => Paint(new Color32(29, 209, 161, 255), c =>
+        {
+            Speaker(c);
+            // sound waves
+            for (var k = 0; k < 2; k++)
+            {
+                var r = 0.11f + k * 0.08f;
+                var prev = (0f, 0f);
+                for (var i = 0; i <= 12; i++)
+                {
+                    var a = -0.8f + 1.6f * i / 12f;
+                    var p = (0.53f + MathF.Cos(a) * r, 0.5f + MathF.Sin(a) * r);
+                    if (i > 0) c.Line(Color.white, prev, p, 0.035f);
+                    prev = p;
+                }
+            }
+        });
+
+        public static Texture2D SoundOff() => Paint(new Color32(131, 149, 167, 255), c =>
+        {
+            Speaker(c);
+            c.Line(Color.white, (0.58f, 0.42f), (0.72f, 0.58f), 0.045f);
+            c.Line(Color.white, (0.72f, 0.42f), (0.58f, 0.58f), 0.045f);
+        });
+
+        private static void Speaker(Canvas c)
+        {
+            c.Polygon(Color.white, (0.27f, 0.42f), (0.36f, 0.42f), (0.36f, 0.58f), (0.27f, 0.58f));
+            c.Polygon(Color.white, (0.35f, 0.42f), (0.50f, 0.29f), (0.50f, 0.71f), (0.35f, 0.58f));
+        }
+
         private static Texture2D Paint(Color32 fill, Action<Canvas> icon)
         {
             var canvas = new Canvas(Size * Super);

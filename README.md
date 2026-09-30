@@ -16,17 +16,25 @@ scare and chase.
 1. Open the project in Unity 6 (6000.6) and press Play. `Assets/Scenes/GameScene.unity` is the
    game scene (**AnimatedDrawingsWorld → Build Game Scene** recreates it), but pressing Play in any
    scene starts the game. Errors, if any, appear in a red note at the bottom of the screen.
-2. The screen shows only three round buttons:
+2. The screen shows only big round buttons:
    * **Monster** (top left): add a character. Pick a photo or scan of any drawing; it is cut out
      of the paper, rigged and joins the scene. Files picked from a sample folder
      (`StreamingAssets/Samples/Characters/*/texture.png`) keep their annotated skeleton.
    * **House and sun** (top right): change the background. It is re-analyzed and everyone moves
      onto the new ground.
    * **Cross** (bottom, shown when there are characters): remove all characters.
-3. Everything else happens in the drawing: **drag** a character to pick it up (drop it in a tree
-   crown and it sits on a branch, drop it in the sky and it falls) and **right-click** the ground
-   to send the last touched character there. Bubbles show moods: `!` fright, `♪` dancing,
-   `♥` friends, `Zzz` asleep.
+   * **Speaker** (next to the cross): sound on/off (remembered).
+3. **Click a character** to open its card (large text): what it is doing and thinking, its
+   energy/friendliness/curiosity, Human/Monster/Animal, and buttons to make it climb, sleep,
+   swim, dance... **Drag** a character to pick it up (drop it in a tree crown and it sits on a
+   branch, drop it in the sky and it falls) and **right-click** the ground to send the clicked
+   character there. Bubbles show moods: `!` fright, `♪` dancing, `♥` friends, `Zzz` asleep.
+4. **Sounds** are synthesized in code (no audio files) and each character has its own voice
+   pitch: children chatter and say "hi", squeak "eek!" when scared, yawn and snore; monsters
+   growl and roar; animals oink; plus boings, splashes, sniffs, a little jingle when a dance
+   starts, and pops/whooshes for new characters and backgrounds. Sounds only play when something
+   changes, with per-character and global limits (turn-taking in chats, one snorer, one jingle
+   per dance party), so a busy scene stays around 30 short sounds a minute.
 
 In the Editor the buttons use the native file dialog; player builds have an in-game file browser.
 
@@ -78,8 +86,9 @@ procedural poses (climb, sit, sleep, swim, smell…) ─────────
   / wave goodbye; monsters roar and people flee — sometimes chased; monsters throw dance parties;
   people pet animals; sleepers get woken up). Humans passing a monster get a fright.
 * **Unity layer** (`Assets/Scripts/Runtime`): `GameController`, `CharacterView` (mesh rebuilt each
-  frame from the posed rig), `BackgroundView`, `GameUI` (three round buttons, icons painted in
-  code by `IconPainter`), `RuntimeFileBrowser`.
+  frame from the posed rig), `BackgroundView`, `GameUI` (round buttons with icons painted in
+  code by `IconPainter`, character card), `SoundPlayer` (plays what `Logic/Audio/SoundDirector`
+  decides, synthesized by `SoundSynth`), `RuntimeFileBrowser`.
 
 Everything in `Assets/Scripts/Logic` is plain C# with no UnityEngine dependency, so it runs (and
 is tested) outside Unity.
@@ -87,7 +96,7 @@ is tested) outside Unity.
 ## Tests
 
 ```
-dotnet test Tests/LogicTests                                          # 64 tests, ~35 s
+dotnet test Tests/LogicTests                                          # 68 tests, ~40 s
 dotnet build Tests/UnityCompileCheck/UnityCompileCheck.csproj         # Unity runtime scripts compile
 dotnet build Tests/UnityCompileCheck/EditorCheck/EditorCheck.csproj   # Editor scripts compile
 RENDER_SIM=1 dotnet test Tests/LogicTests --filter CharactersLive     # + frames in Tests/Output/sim

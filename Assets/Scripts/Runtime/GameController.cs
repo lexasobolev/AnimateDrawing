@@ -46,6 +46,7 @@ namespace AnimatedDrawingsWorld.Runtime
         public float LastErrorTime { get; private set; } = -100f;
 
         public Camera Camera { get; private set; }
+        public SoundPlayer Sounds { get; private set; }
 
         private readonly MotionLibrary motions = new();
         private BackgroundView background;
@@ -118,6 +119,9 @@ namespace AnimatedDrawingsWorld.Runtime
             background = new GameObject("Background").AddComponent<BackgroundView>();
             background.transform.SetParent(transform, false);
             torchServe = new MetaTorchServeClient(torchServeUrl);
+            if (Camera.GetComponent<AudioListener>() == null && FindAudioListener() == null) Camera.gameObject.AddComponent<AudioListener>();
+            Sounds = GetComponent<SoundPlayer>();
+            if (Sounds == null) Sounds = gameObject.AddComponent<SoundPlayer>();
             if (GetComponent<GameUI>() == null) gameObject.AddComponent<GameUI>();
 
             SetStatus("Loading Meta motions...");
@@ -187,6 +191,7 @@ namespace AnimatedDrawingsWorld.Runtime
             }
             else World.SetLayout(layout);
 
+            if (!string.IsNullOrEmpty(CurrentBackgroundName)) PlaySound(Logic.Audio.SoundKind.Whoosh);
             CurrentBackgroundName = name;
             background.Show(texture, World.Width, World.Height);
             FitCamera();
@@ -330,6 +335,7 @@ namespace AnimatedDrawingsWorld.Runtime
             view.transform.SetParent(transform, false);
             view.Initialize(World, agent, built, motions);
             Views.Add(view);
+            PlaySound(Logic.Audio.SoundKind.Pop);
             SetStatus($"{agent.Name} the {finalKind.ToString().ToLowerInvariant()} joined!");
         }
 
@@ -345,6 +351,7 @@ namespace AnimatedDrawingsWorld.Runtime
 
         public void ClearCharacters()
         {
+            if (Views.Count > 0) PlaySound(Logic.Audio.SoundKind.Sweep);
             foreach (var view in Views.ToArray()) Remove(view);
         }
 
@@ -431,6 +438,18 @@ namespace AnimatedDrawingsWorld.Runtime
         }
 
         // ------------------------------------------------------------------ helpers
+
+        private void PlaySound(Logic.Audio.SoundKind kind)
+        {
+            if (Sounds != null) Sounds.PlayUi(kind);
+        }
+
+        private static AudioListener FindAudioListener()
+        {
+            var listeners = Resources.FindObjectsOfTypeAll<AudioListener>();
+            foreach (var l in listeners) if (l.isActiveAndEnabled) return l;
+            return null;
+        }
 
         public void AddLog(string line)
         {
